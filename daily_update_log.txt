@@ -1,1 +1,0 @@
-2017-12-15 06:17:52 UTC (min_editcount=1000): 10522 users in dewiki, 10522 users locally, 0 users added; update execution time: 3.44 seconds

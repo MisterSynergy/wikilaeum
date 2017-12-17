@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # config
-. "${HOME}/config.ini"
+. "${HOME}/wikilaeum/config.ini"
 timestmp=$(date +"%Y%m%d_%H%M%S")
 
 # backup command

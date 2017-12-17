@@ -6,23 +6,26 @@ from time import gmtime, strftime
 import time
 
 # init
-now_at_start = time.time()
-min_editcount = 1000 # should be identical to value in public_html/index.php
-insertcounter_limit = 250
-replica_settings = { 'host':'dewiki.analytics.db.svc.eqiad.wmflabs', 'database':'dewiki_p' }
-tooldb_settings = { 'host':'tools.db.svc.eqiad.wmflabs', 'database':'{}__wikilaeum' }
-
 config = configparser.ConfigParser()
-config.read(expanduser('~') + '/replica.my.cnf')
-replica = mysql.connector.connect(host=replica_settings['host'], database=replica_settings['database'], user=config['client']['user'], password=config['client']['password'], charset='utf8mb4', collation='utf8mb4_bin')
-tooldb = mysql.connector.connect(host=tooldb_settings['host'], database=tooldb_settings['database'].format(config['client']['user']), user=config['client']['user'], password=config['client']['password'], charset='utf8mb4', collation='utf8mb4_bin')
+config.read(expanduser('~') + '/wikilaeum/config.ini')
+dbcredentials = configparser.ConfigParser()
+dbcredentials.read(expanduser('~') + '/replica.my.cnf')
+
+now_at_start = time.time()
+editcount_threshold = int(config['editcount_threshold'])
+insertcounter_limit = int(config['insertcounter_limit'])
+
+replica = mysql.connector.connect(host=config['replica_dewiki_analytics_host'], database=config['replica_dewiki_dbname'], user=dbcredentials['client']['user'], password=dbcredentials['client']['password'], charset='utf8mb4', collation='utf8mb4_bin')
+tooldb = mysql.connector.connect(host=config['tooldb_host'], database=config['tooldb_dbname'], user=dbcredentials['client']['user'], password=dbcredentials['client']['password'], charset='utf8mb4', collation='utf8mb4_bin')
+
+del dbcredentials
 del config
 
 # read database entries
 heavyusers = replica.cursor()
-heavyusers.execute('SELECT user_id FROM user WHERE user_editcount>=%(min_editcount)s', {'min_editcount':min_editcount})
+heavyusers.execute('SELECT user_id FROM user WHERE user_editcount>=%(editcount_threshold)s', {'editcount_threshold':editcount_threshold})
 heavyusers_result = heavyusers.fetchall()
-print('Found {:d} users with more than {:d} edits in replica database'.format(heavyusers.rowcount, min_editcount))
+print('Found {:d} users with more than {:d} edits in replica database'.format(heavyusers.rowcount, editcount_threshold))
 cnt_heavyusers = heavyusers.rowcount
 heavyusers.close()
 
@@ -64,7 +67,7 @@ replica.close()
 tooldb.close()
 
 file = open('./daily_update_log.txt', 'w') 
-output = '{} UTC (min_editcount={:d}): {:d} users in dewiki, {:d} users locally, {:d} users added; update execution time: {:.2f} seconds'.format(strftime('%Y-%m-%d %H:%M:%S', gmtime()), min_editcount, cnt_heavyusers, cnt_localusers, counter2+1, time.time()-now_at_start)
+output = '{} UTC (editcount_threshold={:d}): {:d} users in dewiki, {:d} users locally, {:d} users added; update execution time: {:.2f} seconds'.format(strftime('%Y-%m-%d %H:%M:%S', gmtime()), editcount_threshold, cnt_heavyusers, cnt_localusers, counter2+1, time.time()-now_at_start)
 file.write(output)
 file.close() 
 print(output)

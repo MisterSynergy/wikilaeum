@@ -21,8 +21,8 @@ ln -isf ${HOME}/wikilaeum/tool-update.sh ${HOME}
 
 # database setup
 . ${HOME}/wikilaeum/config.ini
-sql local < "CREATE DATABASE IF NOT EXISTS ${tooldb_dbname} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
-sql local < ${HOME}/wikilaeum/wikilaeum.sql
+mysql --defaults-file=${HOME}/replica.my.cnf -h ${tooldb_host} "CREATE DATABASE IF NOT EXISTS ${tooldb_dbname} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+mysql --defaults-file=${HOME}/replica.my.cnf -h ${tooldb_host} ${tooldb_dbname} < ${HOME}/wikilaeum/wikilaeum.sql
 
 # create cron jobs
 (crontab -l ; echo "15 3 * * 1 sh ${HOME}/wikilaeum/db_backup.sh") | crontab -

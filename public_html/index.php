@@ -28,10 +28,15 @@ unset($tooluser);
 
 // input parameters
 $wikilaeums = array(5 => "Bronze", 10 => "Silber", 15 => "Rubin", 20 => "Gold", 30 => "Platin", 40 => "Diamant", 50 => "Eisen"); // per https://de.wikipedia.org/wiki/Wikipedia:Wikil%C3%A4um
-$footer_html  = '<p>';
-$footer_html .= 'Ein Tool von <a href="https://de.wikipedia.org/wiki/User:MisterSynergy" title=":de:User:MisterSynergy">MisterSynergy</a>';
-$footer_html .= ' • <a href="https://wikitech.wikimedia.org/wiki/Tool:Wikilaeum" title="Infoseite im wikitech-wiki">Infoseite</a> im <a href="https://wikitech.wikimedia.org/" title="Wikitech-Wiki">wikitech-wiki</a>';
-$footer_html .= ' • <a href="https://bitbucket.org/MisterSynergy/wikilaeum/src" title="Quellcode">Quellcode bei bitbucket.org</a>';
+
+$footer_html  = '<p>' . "\n";
+$footer_html .= 'Ein Tool von <a href="https://de.wikipedia.org/wiki/User:MisterSynergy" title=":de:User:MisterSynergy">MisterSynergy</a>' . "\n";
+$footer_html .= ' • <a href="https://wikitech.wikimedia.org/wiki/Tool:Wikilaeum" title="Infoseite im wikitech-wiki">Infoseite</a> im <a href="https://wikitech.wikimedia.org/" title="Wikitech-Wiki">wikitech-wiki</a>' . "\n";
+$footer_html .= ' • <a href="https://bitbucket.org/MisterSynergy/wikilaeum/src" title="Quellcode">Quellcode bei bitbucket.org</a>' . "\n";
+$daily_update_log = file_get_contents('../daily_update_log.txt');
+$footer_html .= '<!-- ' . $daily_update_log . ' -->' . "\n";
+$commit_version = file_get_contents('../commit_version_and_timestamp.txt');
+$footer_html .= '<!-- ' . str_replace("\n", ", ", $commit_version) . ' -->' . "\n";
 $footer_html .= '</p>';
 
 // define some useful variables
@@ -207,9 +212,9 @@ if(false === $invalid_date){
 }
 
 // end of page
-echo '<footer>' . $footer_html . '</footer>' . "\n";
-$daily_update_log = file_get_contents('../daily_update_log.txt');
-echo '<!-- ' . $daily_update_log . ' -->' . "\n";
+echo '<footer>' . "\n";
+echo $footer_html . "\n";
+echo '</footer>' . "\n";
 echo '</body>' . "\n";
 echo '</html>';
 

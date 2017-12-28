@@ -173,7 +173,7 @@ if(false === $invalid_date){
 
 					if($row1['user_registration'] !== null){
 						$reg_timestamp = formatTimestamp($row1['user_registration'], $config['timezone']);
-						echo '<td class="tdcenter">' . date('j.', $reg_timestamp) . ' ' . $months[getMonth($row1['user_registration'])] . ' ' . date('Y, H:i:s', $reg_timestamp) . '</td>';
+						echo '<td class="tdcenter">' . date('j.', $reg_timestamp) . ' ' . $months[intval(date('n', $reg_timestamp))] . ' ' . date('Y, H:i:s', $reg_timestamp) . '</td>';
 					}
 					else {
 						echo '<td class="tdcenter na">unbekannt</td>';
@@ -183,11 +183,11 @@ if(false === $invalid_date){
 					$row2 = $statement2->fetchAll();
 
 					$first_timestamp = formatTimestamp($row2[0]['first_edit'], $config['timezone']);
-					echo '<td class="tdcenter">' . date('j.', $first_timestamp) . ' ' . $months[getMonth($row2[0]['first_edit'])] . ' ' . date('Y, H:i:s', $first_timestamp) . '</td>';
+					echo '<td class="tdcenter">' . date('j.', $first_timestamp) . ' ' . $months[intval(date('n', $first_timestamp))] . ' ' . date('Y, H:i:s', $first_timestamp) . '</td>';
 
 					$last_timestamp = formatTimestamp($row2[0]['last_edit'], $config['timezone']);
 					$diff_seconds = time() - $last_timestamp;
-					echo '<td class="tdcenter">' . date('j.', $last_timestamp) . ' ' . $months[getMonth($row2[0]['last_edit'])] . ' ' . date('Y, H:i:s', $last_timestamp) . '</td>';
+					echo '<td class="tdcenter">' . date('j.', $last_timestamp) . ' ' . $months[intval(date('n', $last_timestamp))] . ' ' . date('Y, H:i:s', $last_timestamp) . '</td>';
 					echo '<td class="tdcenter">' . printDiffInDays($diff_seconds) . '</td>';
 					echo '</tr>' . "\n";
 				}
@@ -232,9 +232,9 @@ function formatTimestamp($mwtimestamp, $timezone='Europe/Berlin'){
 	return $date->format('U');
 }
 
-function getMonth($mwtimestamp){
-	return intval(substr($mwtimestamp, 4, 2));
-}
+//function getMonth($mwtimestamp){
+//	return intval(substr($mwtimestamp, 4, 2));
+//}
 
 function printDiffInDays($seconds){
 	$days = bcdiv($seconds, 86400, 0);

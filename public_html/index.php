@@ -227,7 +227,7 @@ function formatTimestamp($mwtimestamp, $timezone='Europe/Berlin'){
 	$day = intval(substr($mwtimestamp, 6, 2));
 
 	$date = new DateTime($year . '-' . $month . '-' . $day . ' ' . $hour . ':' . $minute . ':' . $second, new DateTimeZone('UTC'));
-	$date->setTimezone($timezone);
+	$date->setTimezone(new DateTimeZone($timezone));
 
 	return $date->format('U');
 }

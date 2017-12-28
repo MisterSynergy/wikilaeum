@@ -132,8 +132,8 @@ if(false === $invalid_date){
 	foreach($wikilaeums as $wikilaeum => $commonname){
 		$dt_start = new DateTime(sprintf('%d-%02d-%02d %02d:%02d:%02d', $year-$wikilaeum, $month, $day, 0, 0, 0), new DateTimeZone($config['timezone']));
 		$dt_end = new DateTime(sprintf('%d-%02d-%02d %02d:%02d:%02d', $year-$wikilaeum, $month, $day, 23, 59, 59), new DateTimeZone($config['timezone']));
-		$dt_start->setTimezone('UTC');
-		$dt_end->setTimezone('UTC');
+		$dt_start->setTimezone(new DateTimeZone('UTC'));
+		$dt_end->setTimezone(new DateTimeZone('UTC'));
 
 		$start = intval($dt_start->format('YmdHis'));
 		$end = intval($dt_end->format('YmdHis'));

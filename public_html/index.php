@@ -58,7 +58,7 @@ if((true === in_array($month, array(4, 6, 9, 11)) && $day === 31) || ($month ===
 	$invalid_date = true;
 	$day = 1;
 }
-if($year === null && $month === null && $day === null){ // if no input is give, select todays date
+if($year === null && $month === null && $day === null){ // if no input is given, select todays date
 	$invalid_date = true; // but do not evaluate result yet
 	$year = intval(date('Y', time()));
 	$month = intval(date('n', time()));
@@ -242,10 +242,6 @@ function formatTimestamp($mwtimestamp, $timezone='Europe/Berlin'){
 
 	return $date->format('U');
 }
-
-//function getMonth($mwtimestamp){
-//	return intval(substr($mwtimestamp, 4, 2));
-//}
 
 function printDiffInDays($seconds){
 	$days = bcdiv($seconds, 86400, 0);

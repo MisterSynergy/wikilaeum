@@ -128,6 +128,8 @@ if(false === $invalid_date){
 	$statement2 = $db->getConnection()->prepare($sql2);
 	$statement2->bindParam(':revuser', $userid, PDO::PARAM_INT);
 
+//	$sql3; // defined further down; uses "WHERE ... IN (...)", which is not possible with PDO's prepared statements
+
 	$found_any = false;
 
 	foreach($wikilaeums as $wikilaeum => $commonname){
@@ -153,24 +155,31 @@ if(false === $invalid_date){
 				$sql1 = 'SELECT user.user_id, user.user_name, user.user_editcount, user.user_registration, GROUP_CONCAT(user_groups.ug_group) AS ug_groups FROM user LEFT JOIN user_groups ON user.user_id=user_groups.ug_user WHERE user.user_id IN (' . implode(',', $userids) . ') GROUP BY user.user_id, user.user_name, user.user_editcount, user.user_registration ORDER BY user.user_editcount DESC';
 				$result1 = $db->getConnection()->query($sql1);
 
+				$sql3 = 'SELECT log_title, COUNT(log_id) AS number_of_blocks FROM logging WHERE log_namespace=2 AND log_title IN (SELECT user_name FROM user WHERE user_id IN (' . implode(',', $userids) . ')) AND log_type="block" AND log_action="block" GROUP BY log_title';
+//				$result3 = $db->getConnection()->query($sql3); // poor performance
+//				$blocks = array();
+//				while($row3 = $result3->fetch()){
+//					$blocks[$row3['log_title']] = $row3['number_of_blocks'];
+//				}
+
 				echo '<section>' . "\n";
 				echo '<h2>Auszeichnungsstufe <span class="level ' . strtolower($commonname) . '">' . $commonname . '</span> (' . $wikilaeum . ' Jahre)</h2>' . "\n";
 				echo '<table class="results ' . strtolower($commonname) . '">' . "\n";
-				echo '<thead><tr><th>User</th><th>Links</th><th>Beiträge</th><th>Benutzergruppen</th><th>Anmeldung</th><th>Erster Beitrag</th><th colspan="2">Letzter Beitrag</tr></thead>' . "\n";
+				echo '<thead><tr><th>User</th><th>Links</th><th>Benutzergruppen</th><th>Beiträge</th><th>Anmeldung</th><th>Erster Beitrag</th><th colspan="2">Letzter Beitrag</tr></thead>' . "\n";
 				echo '<tbody>' . "\n";
 				foreach($result1 as $row1){
 					$userid = intval($row1['user_id']);
 
 					echo '<tr>';
 					echo '<td><a href="https://de.wikipedia.org/wiki/User:' . str_replace(' ', '_', $row1['user_name']) . '" title="Benutzerseite von ' . $row1['user_name'] . '">' . $row1['user_name'] . '</a><!-- user id: ' . $row1['user_id'] . ' --></td>';
-					echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/User_talk:' . str_replace(' ', '_', $row1['user_name']) . '" title="Diskussionsseite von ' . $row1['user_name'] . '">Diskussion</a> • <a href="https://de.wikipedia.org/wiki/Special:Log/' . str_replace(' ', '_', $row1['user_name']) . '" title="Logbücher zu ' . $row1['user_name'] . '">log</a> • <a href="https://xtools.wmflabs.org/ec/dewiki/' . str_replace(' ', '_', $row1['user_name']) . '" title="xtools Beitragszähler für ' . $row1['user_name'] . '">xtools</a></td>';
-					echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/Special:Contributions/' . str_replace(' ', '_', $row1['user_name']) . '" titel="Beiträge von ' . $row1['user_name'] . '">' . $row1['user_editcount'] . '</a></td>';
+					echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/User_talk:' . str_replace(' ', '_', $row1['user_name']) . '" title="Diskussionsseite von ' . $row1['user_name'] . '">Diskussion</a> • <a href="https://de.wikipedia.org/wiki/Special:Log/' . str_replace(' ', '_', $row1['user_name']) . '" title="Logbuch zu ' . $row1['user_name'] . '">Logbuch</a> • <a href="https://de.wikipedia.org/w/index.php?title=Spezial%3ALogbuch&type=block&page=User%3A' . str_replace(' ', '_', $row1['user_name']) . '" title="Sperrlog von ' . $row1['user_name'] . '">Sperrlog</a> • <a href="https://xtools.wmflabs.org/ec/dewiki/' . str_replace(' ', '_', $row1['user_name']) . '" title="xtools Beitragszähler für ' . $row1['user_name'] . '">xtools</a> • <a href="https://xtools.wmflabs.org/pages/de.wikipedia.org/' . str_replace(' ', '_', $row1['user_name']) . '" title="Neue Artikel von ' . $row1['user_Name'] . '">Artikel</a></td>';
 					if($row1['ug_groups'] !== null){
 						echo '<td>' . str_replace(',', ', ', $row1['ug_groups']) . '</td>';
 					}
 					else {
 						echo '<td class="na">keine</td>';
 					}
+					echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/Special:Contributions/' . str_replace(' ', '_', $row1['user_name']) . '" titel="Beiträge von ' . $row1['user_name'] . '">' . $row1['user_editcount'] . '</a></td>';
 
 					if($row1['user_registration'] !== null){
 						$reg_timestamp = formatTimestamp($row1['user_registration'], $config['timezone']);
@@ -206,8 +215,9 @@ if(false === $invalid_date){
 	}
 
 	$statement0 = null;
-	$statement1 = null;
+	$result1 = null;
 	$statement2 = null;
+	$result3 = null;
 	$db = null;
 	$tooldb = null;
 }

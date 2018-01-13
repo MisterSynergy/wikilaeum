@@ -77,7 +77,7 @@ if(false === $invalid_date){
 
 // print input form
 echo '<nav>' . "\n";
-echo '<form action="./index.php" method="GET">' . "\n";
+echo '<form action=".' . $SERVER_['SCRIPT_NAME'] . '" method="GET">' . "\n";
 if(isset($_GET['min_editcount']) && intval($_GET['min_editcount'])<intval($config['editcount_threshold'])){
 	$min_editcount = intval($config['editcount_threshold']);
 	echo '<p>Benutzer mit Beitragszahlen unter ' . $config['editcount_threshold'] . ' können nicht ausgewertet werden.</p>' . "\n";
@@ -103,11 +103,11 @@ echo '<span class="separator">•</span>' . "\n";
 echo '<input type="submit" value="auswerten">' . "\n";
 if(isset($timestmpMinusOneDay)){
 	echo '<span class="separator">•</span>' . "\n";
-	echo '<a href="./index.php?day=' . date('j', $timestmpMinusOneDay) . '&amp;month=' . date('n', $timestmpMinusOneDay) . '&amp;year=' . date('Y', $timestmpMinusOneDay) . '&amp;min_editcount=' . $min_editcount . '" title="Auswertung des Vortages (' . date('j', $timestmpMinusOneDay) . '. ' . $months[intval(date('n', $timestmpMinusOneDay))] . ' ' . date('Y', $timestmpMinusOneDay) . ')">Vortag</a>' . "\n";
+	echo '<a href=".' . $SERVER_['SCRIPT_NAME'] . '?day=' . date('j', $timestmpMinusOneDay) . '&amp;month=' . date('n', $timestmpMinusOneDay) . '&amp;year=' . date('Y', $timestmpMinusOneDay) . '&amp;min_editcount=' . $min_editcount . '" title="Auswertung des Vortages (' . date('j', $timestmpMinusOneDay) . '. ' . $months[intval(date('n', $timestmpMinusOneDay))] . ' ' . date('Y', $timestmpMinusOneDay) . ')">Vortag</a>' . "\n";
 }
 if(isset($timestmpPlusOneDay)){
 	echo '<span class="separator">•</span>' . "\n";
-	echo '<a href="./index.php?day=' . date('j', $timestmpPlusOneDay) . '&amp;month=' . date('n', $timestmpPlusOneDay) . '&amp;year=' . date('Y', $timestmpPlusOneDay) . '&amp;min_editcount=' . $min_editcount . '" title="Auswertung des Folgetages (' . date('j', $timestmpPlusOneDay) . '. ' . $months[intval(date('n', $timestmpPlusOneDay))] . ' ' . date('Y', $timestmpPlusOneDay) . ')">Folgetag</a>' . "\n";
+	echo '<a href=".' . $SERVER_['SCRIPT_NAME'] . '?day=' . date('j', $timestmpPlusOneDay) . '&amp;month=' . date('n', $timestmpPlusOneDay) . '&amp;year=' . date('Y', $timestmpPlusOneDay) . '&amp;min_editcount=' . $min_editcount . '" title="Auswertung des Folgetages (' . date('j', $timestmpPlusOneDay) . '. ' . $months[intval(date('n', $timestmpPlusOneDay))] . ' ' . date('Y', $timestmpPlusOneDay) . ')">Folgetag</a>' . "\n";
 }
 echo '</form>' . "\n";
 echo '</nav>' . "\n";

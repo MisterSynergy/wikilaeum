@@ -50,7 +50,7 @@ date_default_timezone_set($config['timezone']);
 $year = isset($_GET['year'])?intval($_GET['year']):null;
 $month = isset($_GET['month'])?intval($_GET['month']):null;
 $day = isset($_GET['day'])?intval($_GET['day']):null;
-$min_editcount = isset($_GET['min_editcount'])?intval($_GET['min_editcount']):intval($config['editcount_threshold']);
+$min_editcount = isset($_GET['min_editcount'])?intval($_GET['min_editcount']):intval($config['editcount_default']);
 
 // verify input
 $invalid_date = false;
@@ -143,6 +143,7 @@ if(false === $invalid_date){
 		try {
 			$statement0->execute();
 			$result0 = $statement0->fetchAll();
+
 			$userids = array();
 			$first = array();
 			foreach($result0 as $elem){
@@ -150,10 +151,16 @@ if(false === $invalid_date){
 				$first[intval($elem['user_id'])] = $elem['timestmp_first'];
 			}
 
-			if($statement0->rowcount() > 0){
+			if(count($userids) > 0){
+				$sql1 = 'SELECT user.user_id, user.user_name, user.user_editcount, user.user_registration, GROUP_CONCAT(user_groups.ug_group) AS ug_groups FROM user LEFT JOIN user_groups ON user.user_id=user_groups.ug_user WHERE user.user_id IN (' . implode(',', $userids) . ') AND user.user_editcount>=:mineditcount GROUP BY user.user_id, user.user_name, user.user_editcount, user.user_registration ORDER BY user.user_editcount DESC';
+				$statement1 = $db->getConnection()->prepare($sql1);
+				$statement1->bindParam(':mineditcount', $min_editcount);
+				$statement1->execute();
+			}
+
+			if($statement0->rowcount() > 0 && $statement1->rowcount() > 0){
+				$result1 = $statement1->fetchAll();
 				$found_any = true;
-				$sql1 = 'SELECT user.user_id, user.user_name, user.user_editcount, user.user_registration, GROUP_CONCAT(user_groups.ug_group) AS ug_groups FROM user LEFT JOIN user_groups ON user.user_id=user_groups.ug_user WHERE user.user_id IN (' . implode(',', $userids) . ') GROUP BY user.user_id, user.user_name, user.user_editcount, user.user_registration ORDER BY user.user_editcount DESC';
-				$result1 = $db->getConnection()->query($sql1);
 
 				$sql3 = 'SELECT log_title, COUNT(log_id) AS number_of_blocks FROM logging WHERE log_namespace=2 AND log_title IN (SELECT user_name FROM user WHERE user_id IN (' . implode(',', $userids) . ')) AND log_type="block" AND log_action="block" GROUP BY log_title';
 //				$result3 = $db->getConnection()->query($sql3); // poor performance
@@ -169,7 +176,6 @@ if(false === $invalid_date){
 				echo '<tbody>' . "\n";
 				foreach($result1 as $row1){
 					$userid = intval($row1['user_id']);
-
 					echo '<tr>';
 					echo '<td><a href="https://de.wikipedia.org/wiki/User:' . str_replace(' ', '_', $row1['user_name']) . '" title="Benutzerseite von ' . $row1['user_name'] . '">' . $row1['user_name'] . '</a><!-- user id: ' . $row1['user_id'] . ' --></td>';
 					echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/User_talk:' . str_replace(' ', '_', $row1['user_name']) . '" title="Diskussionsseite von ' . $row1['user_name'] . '">Diskussion</a> • <a href="https://de.wikipedia.org/wiki/Special:Log/' . str_replace(' ', '_', $row1['user_name']) . '" title="Logbuch zu ' . $row1['user_name'] . '">Logbuch</a> • <a href="https://de.wikipedia.org/w/index.php?title=Spezial%3ALogbuch&type=block&page=User%3A' . str_replace(' ', '_', $row1['user_name']) . '" title="Sperrlog von ' . $row1['user_name'] . '">Sperrlog</a> • <a href="https://xtools.wmflabs.org/ec/dewiki/' . str_replace(' ', '_', $row1['user_name']) . '" title="xtools Beitragszähler für ' . $row1['user_name'] . '">xtools</a> • <a href="https://xtools.wmflabs.org/pages/de.wikipedia.org/' . str_replace(' ', '_', $row1['user_name']) . '" title="Neue Artikel von ' . $row1['user_Name'] . '">Artikel</a></td>';

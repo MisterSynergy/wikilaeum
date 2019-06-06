@@ -124,13 +124,17 @@ if(false === $invalid_date){
 
 //	$sql1; // defined further down; uses "WHERE ... IN (...)", which is not possible with PDO's prepared statements
 
-	$sql2a = 'SELECT actor_id FROM actor WHERE actor_user=:actoruser';
-	$statement2a = $db->getConnection()->prepare($sql2a);
-	$statement2a->bindParam(':actoruser', $userid, PDO::PARAM_INT);
+	$sql2_actor = 'SELECT actor_id FROM actor WHERE actor_user=:actoruser';
+	$statement2_actor = $db->getConnection()->prepare($sql2_actor);
+	$statement2_actor->bindParam(':actoruser', $userid, PDO::PARAM_INT);
 
-	$sql2 = 'SELECT MIN(rev_timestamp) AS first_edit, MAX(rev_timestamp) AS last_edit FROM revision_userindex WHERE rev_actor=:actorid'; // https://wikitech.wikimedia.org/wiki/Help:Toolforge/Database#Tables_for_revision_or_logging_queries_involving_user_names_and_IDs ; see also #wikimedia-cloud archive of 2019-06-05 evening for the actor table
-	$statement2 = $db->getConnection()->prepare($sql2);
-	$statement2->bindParam(':actorid', $actorid, PDO::PARAM_INT);
+	$sql2_first = 'SELECT rev_timestamp AS first_edit FROM revision_userindex WHERE rev_actor=:actorid ORDER BY rev_timestamp ASC LIMIT 1'; // https://wikitech.wikimedia.org/wiki/Help:Toolforge/Database#Tables_for_revision_or_logging_queries_involving_user_names_and_IDs ; see also #wikimedia-cloud archive of 2019-06-05 evening for the actor table
+	$statement2_first = $db->getConnection()->prepare($sql2_first);
+	$statement2_first->bindParam(':actorid', $actorid, PDO::PARAM_INT);
+
+	$sql2_last = 'SELECT rev_timestamp AS last_edit FROM revision_userindex WHERE rev_actor=:actorid ORDER BY rev_timestamp DESC LIMIT 1';
+	$statement2_last = $db->getConnection()->prepare($sql2_last);
+	$statement2_last->bindParam(':actorid', $actorid, PDO::PARAM_INT);
 
 //	$sql3; // defined further down; uses "WHERE ... IN (...)", which is not possible with PDO's prepared statements
 
@@ -181,9 +185,9 @@ if(false === $invalid_date){
 				foreach($result1 as $row1){
 					$userid = intval($row1['user_id']);
 
-					$statement2a->execute();
-					$row2a = $statement2a->fetchAll();
-					$actorid = $row2a[0]['actor_id'];
+					$statement2_actor->execute();
+					$row2_actor = $statement2_actor->fetchAll();
+					$actorid = $row2_actor[0]['actor_id'];
 
 					echo '<tr>';
 					echo '<td><a href="https://de.wikipedia.org/wiki/User:' . str_replace(' ', '_', $row1['user_name']) . '" title="Benutzerseite von ' . $row1['user_name'] . '">' . $row1['user_name'] . '</a><!-- user id: ' . $row1['user_id'] . '; actor id: ' . $actorid . ' --></td>';
@@ -204,13 +208,14 @@ if(false === $invalid_date){
 						echo '<td class="tdcenter na">unbekannt</td>';
 					}
 
-					$statement2->execute();
-					$row2 = $statement2->fetchAll();
-
-					$first_timestamp = formatTimestamp($row2[0]['first_edit'], $config['timezone']);
+					$statement2_first->execute();
+					$row2_first = $statement2_first->fetchAll();
+					$first_timestamp = formatTimestamp($row2_first[0]['first_edit'], $config['timezone']);
 					echo '<td class="tdcenter">' . date('j.', $first_timestamp) . ' ' . $months[intval(date('n', $first_timestamp))] . ' ' . date('Y, H:i:s', $first_timestamp) . '</td>';
 
-					$last_timestamp = formatTimestamp($row2[0]['last_edit'], $config['timezone']);
+					$statement2_last->execute();
+					$row2_last = $statement2_last->fetchAll();
+					$last_timestamp = formatTimestamp($row2_last[0]['last_edit'], $config['timezone']);
 					$diff_seconds = time() - $last_timestamp;
 					echo '<td class="tdcenter">' . date('j.', $last_timestamp) . ' ' . $months[intval(date('n', $last_timestamp))] . ' ' . date('Y, H:i:s', $last_timestamp) . '</td>';
 					echo '<td class="tdcenter">' . printDiffInDays($diff_seconds) . '</td>';
@@ -231,7 +236,9 @@ if(false === $invalid_date){
 
 	$statement0 = null;
 	$result1 = null;
-	$statement2 = null;
+	$statement2_actor = null;
+	$statement2_first = null;
+	$statement2_last = null;
 	$result3 = null;
 	$db = null;
 	$tooldb = null;

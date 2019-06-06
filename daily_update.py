@@ -17,7 +17,7 @@ with open(expanduser('~') + '/wikilaeum/config.ini') as lines:
 for key in config['wikilaeum']:
     config['wikilaeum'][key] = config['wikilaeum'][key].replace('"', '')
     #print('{} : {}'.format(key, config['wikilaeum'][key]))
-    
+
 dbcredentials = configparser.ConfigParser()
 dbcredentials.read(expanduser('~') + '/replica.my.cnf')
 
@@ -63,7 +63,7 @@ if len(list_of_ids)>0:
 
     time_before = time.time()
     print('Perform database query to cache data about up to {:d} users (this may take a while) ...'.format(insertcounter_limit))
-    select_query = 'SELECT rev_user, MIN(rev_timestamp) AS first_edit FROM revision_userindex WHERE rev_user IN ({}) GROUP BY rev_user'.format(','.join(['%s']*len(list_of_ids)))
+    select_query = 'SELECT actor.actor_user, MIN(revision_userindex.rev_timestamp) AS first_edit FROM revision_userindex JOIN actor ON revision_userindex.rev_actor=actor.actor_id WHERE actor.actor_user IN ({}) GROUP BY actor.actor_user'.format(','.join(['%s']*len(list_of_ids)))
     select_parameters = tuple(list_of_ids)
 #    print('Select query: {}'.format(select_query))
 #    print('Select parameters: {}'.format(select_parameters))

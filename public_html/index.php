@@ -145,88 +145,89 @@ if(false === $invalid_date){
 		$dt_end = new DateTime(sprintf('%d-%02d-%02d %02d:%02d:%02d', $year-$wikilaeum, $month, $day, 23, 59, 59), new DateTimeZone($config['timezone']));
 		$dt_start->setTimezone(new DateTimeZone('UTC'));
 		$dt_end->setTimezone(new DateTimeZone('UTC'));
+		if($month === intval($dt_start->format('m'))){ // important to avoid showing results for March 1 on February 29 (i.e. only on leap day, which does not necessarily exist n years earlier)
+			$start = intval($dt_start->format('YmdHis'));
+			$end = intval($dt_end->format('YmdHis'));
+			try {
+				$statement0->execute();
+				$result0 = $statement0->fetchAll();
 
-		$start = intval($dt_start->format('YmdHis'));
-		$end = intval($dt_end->format('YmdHis'));
-		try {
-			$statement0->execute();
-			$result0 = $statement0->fetchAll();
-
-			$userids = array();
-			$first = array();
-			foreach($result0 as $elem){
-				$userids[] = intval($elem['user_id']);
-				$first[intval($elem['user_id'])] = $elem['timestmp_first'];
-			}
-
-			if(count($userids) > 0){
-				$sql1 = 'SELECT user.user_id, user.user_name, user.user_editcount, user.user_registration, GROUP_CONCAT(user_groups.ug_group) AS ug_groups FROM user LEFT JOIN user_groups ON user.user_id=user_groups.ug_user WHERE user.user_id IN (' . implode(',', $userids) . ') AND user.user_editcount>=:mineditcount GROUP BY user.user_id, user.user_name, user.user_editcount, user.user_registration ORDER BY user.user_editcount DESC';
-				$statement1 = $db->getConnection()->prepare($sql1);
-				$statement1->bindParam(':mineditcount', $min_editcount);
-				$statement1->execute();
-			}
-
-			if($statement0->rowcount() > 0 && $statement1->rowcount() > 0){
-				$result1 = $statement1->fetchAll();
-				$found_any = true;
-
-				$sql3 = 'SELECT log_title, COUNT(log_id) AS number_of_blocks FROM logging WHERE log_namespace=2 AND log_title IN (SELECT user_name FROM user WHERE user_id IN (' . implode(',', $userids) . ')) AND log_type="block" AND log_action="block" GROUP BY log_title';
-//				$result3 = $db->getConnection()->query($sql3); // poor performance
-//				$blocks = array();
-//				while($row3 = $result3->fetch()){
-//					$blocks[$row3['log_title']] = $row3['number_of_blocks'];
-//				}
-
-				echo '<section>' . "\n";
-				echo '<h2>Auszeichnungsstufe <span class="level ' . strtolower($commonname) . '">' . $commonname . '</span> (' . $wikilaeum . ' Jahre)</h2>' . "\n";
-				echo '<table class="results ' . strtolower($commonname) . '">' . "\n";
-				echo '<thead><tr><th>User</th><th>Links</th><th>Benutzergruppen</th><th>Beiträge</th><th>Anmeldung</th><th>Erster Beitrag</th><th colspan="2">Letzter Beitrag</tr></thead>' . "\n";
-				echo '<tbody>' . "\n";
-				foreach($result1 as $row1){
-					$userid = intval($row1['user_id']);
-
-					$statement2_actor->execute();
-					$row2_actor = $statement2_actor->fetchAll();
-					$actorid = $row2_actor[0]['actor_id'];
-
-					echo '<tr>';
-					echo '<td><a href="https://de.wikipedia.org/wiki/User:' . str_replace(' ', '_', $row1['user_name']) . '" title="Benutzerseite von ' . $row1['user_name'] . '">' . $row1['user_name'] . '</a><!-- user id: ' . $row1['user_id'] . '; actor id: ' . $actorid . ' --></td>';
-					echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/User_talk:' . str_replace(' ', '_', $row1['user_name']) . '" title="Diskussionsseite von ' . $row1['user_name'] . '">Diskussion</a> • <a href="https://de.wikipedia.org/wiki/Special:Log/' . str_replace(' ', '_', $row1['user_name']) . '" title="Logbuch zu ' . $row1['user_name'] . '">Logbuch</a> • <a href="https://de.wikipedia.org/w/index.php?title=Spezial%3ALogbuch&amp;type=block&amp;page=User%3A' . str_replace(' ', '_', $row1['user_name']) . '" title="Sperrlog von ' . $row1['user_name'] . '">Sperrlog</a> • <a href="https://xtools.wmflabs.org/ec/dewiki/' . str_replace(' ', '_', $row1['user_name']) . '" title="xtools Beitragszähler für ' . $row1['user_name'] . '">xtools</a> • <a href="https://xtools.wmflabs.org/pages/de.wikipedia.org/' . str_replace(' ', '_', $row1['user_name']) . '" title="Neue Artikel von ' . $row1['user_name'] . '">Artikel</a></td>';
-					if($row1['ug_groups'] !== null){
-						echo '<td>' . str_replace(',', ', ', $row1['ug_groups']) . '</td>';
-					}
-					else {
-						echo '<td class="na">keine</td>';
-					}
-					echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/Special:Contributions/' . str_replace(' ', '_', $row1['user_name']) . '" titel="Beiträge von ' . $row1['user_name'] . '">' . $row1['user_editcount'] . '</a></td>';
-
-					if($row1['user_registration'] !== null){
-						$reg_timestamp = formatTimestamp($row1['user_registration'], $config['timezone']);
-						echo '<td class="tdcenter">' . date('j.', $reg_timestamp) . ' ' . $months[intval(date('n', $reg_timestamp))] . ' ' . date('Y, H:i:s', $reg_timestamp) . '</td>';
-					}
-					else {
-						echo '<td class="tdcenter na">unbekannt</td>';
-					}
-
-					$statement2_first->execute();
-					$row2_first = $statement2_first->fetchAll();
-					$first_timestamp = formatTimestamp($row2_first[0]['first_edit'], $config['timezone']);
-					echo '<td class="tdcenter">' . date('j.', $first_timestamp) . ' ' . $months[intval(date('n', $first_timestamp))] . ' ' . date('Y, H:i:s', $first_timestamp) . '</td>';
-
-					$statement2_last->execute();
-					$row2_last = $statement2_last->fetchAll();
-					$last_timestamp = formatTimestamp($row2_last[0]['last_edit'], $config['timezone']);
-					$diff_seconds = time() - $last_timestamp;
-					echo '<td class="tdcenter">' . date('j.', $last_timestamp) . ' ' . $months[intval(date('n', $last_timestamp))] . ' ' . date('Y, H:i:s', $last_timestamp) . '</td>';
-					echo '<td class="tdcenter">' . printDiffInDays($diff_seconds) . '</td>';
-					echo '</tr>' . "\n";
+				$userids = array();
+				$first = array();
+				foreach($result0 as $elem){
+					$userids[] = intval($elem['user_id']);
+					$first[intval($elem['user_id'])] = $elem['timestmp_first'];
 				}
-				echo '</tbody>' . "\n";
-				echo '</table>' . "\n";
-				echo '</section>' . "\n";
+
+				if(count($userids) > 0){
+					$sql1 = 'SELECT user.user_id, user.user_name, user.user_editcount, user.user_registration, GROUP_CONCAT(user_groups.ug_group) AS ug_groups FROM user LEFT JOIN user_groups ON user.user_id=user_groups.ug_user WHERE user.user_id IN (' . implode(',', $userids) . ') AND user.user_editcount>=:mineditcount GROUP BY user.user_id, user.user_name, user.user_editcount, user.user_registration ORDER BY user.user_editcount DESC';
+					$statement1 = $db->getConnection()->prepare($sql1);
+					$statement1->bindParam(':mineditcount', $min_editcount);
+					$statement1->execute();
+				}
+
+				if($statement0->rowcount() > 0 && $statement1->rowcount() > 0){
+					$result1 = $statement1->fetchAll();
+					$found_any = true;
+
+					$sql3 = 'SELECT log_title, COUNT(log_id) AS number_of_blocks FROM logging WHERE log_namespace=2 AND log_title IN (SELECT user_name FROM user WHERE user_id IN (' . implode(',', $userids) . ')) AND log_type="block" AND log_action="block" GROUP BY log_title';
+	//				$result3 = $db->getConnection()->query($sql3); // poor performance
+	//				$blocks = array();
+	//				while($row3 = $result3->fetch()){
+	//					$blocks[$row3['log_title']] = $row3['number_of_blocks'];
+	//				}
+
+					echo '<section>' . "\n";
+					echo '<h2>Auszeichnungsstufe <span class="level ' . strtolower($commonname) . '">' . $commonname . '</span> (' . $wikilaeum . ' Jahre)</h2>' . "\n";
+					echo '<table class="results ' . strtolower($commonname) . '">' . "\n";
+					echo '<thead><tr><th>User</th><th>Links</th><th>Benutzergruppen</th><th>Beiträge</th><th>Anmeldung</th><th>Erster Beitrag</th><th colspan="2">Letzter Beitrag</tr></thead>' . "\n";
+					echo '<tbody>' . "\n";
+					foreach($result1 as $row1){
+						$userid = intval($row1['user_id']);
+
+						$statement2_actor->execute();
+						$row2_actor = $statement2_actor->fetchAll();
+						$actorid = $row2_actor[0]['actor_id'];
+
+						echo '<tr>';
+						echo '<td><a href="https://de.wikipedia.org/wiki/User:' . str_replace(' ', '_', $row1['user_name']) . '" title="Benutzerseite von ' . $row1['user_name'] . '">' . $row1['user_name'] . '</a><!-- user id: ' . $row1['user_id'] . '; actor id: ' . $actorid . ' --></td>';
+						echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/User_talk:' . str_replace(' ', '_', $row1['user_name']) . '" title="Diskussionsseite von ' . $row1['user_name'] . '">Diskussion</a> • <a href="https://de.wikipedia.org/wiki/Special:Log/' . str_replace(' ', '_', $row1['user_name']) . '" title="Logbuch zu ' . $row1['user_name'] . '">Logbuch</a> • <a href="https://de.wikipedia.org/w/index.php?title=Spezial%3ALogbuch&amp;type=block&amp;page=User%3A' . str_replace(' ', '_', $row1['user_name']) . '" title="Sperrlog von ' . $row1['user_name'] . '">Sperrlog</a> • <a href="https://xtools.wmflabs.org/ec/dewiki/' . str_replace(' ', '_', $row1['user_name']) . '" title="xtools Beitragszähler für ' . $row1['user_name'] . '">xtools</a> • <a href="https://xtools.wmflabs.org/pages/de.wikipedia.org/' . str_replace(' ', '_', $row1['user_name']) . '" title="Neue Artikel von ' . $row1['user_name'] . '">Artikel</a></td>';
+						if($row1['ug_groups'] !== null){
+							echo '<td>' . str_replace(',', ', ', $row1['ug_groups']) . '</td>';
+						}
+						else {
+							echo '<td class="na">keine</td>';
+						}
+						echo '<td class="tdcenter"><a href="https://de.wikipedia.org/wiki/Special:Contributions/' . str_replace(' ', '_', $row1['user_name']) . '" titel="Beiträge von ' . $row1['user_name'] . '">' . $row1['user_editcount'] . '</a></td>';
+
+						if($row1['user_registration'] !== null){
+							$reg_timestamp = formatTimestamp($row1['user_registration'], $config['timezone']);
+							echo '<td class="tdcenter">' . date('j.', $reg_timestamp) . ' ' . $months[intval(date('n', $reg_timestamp))] . ' ' . date('Y, H:i:s', $reg_timestamp) . '</td>';
+						}
+						else {
+							echo '<td class="tdcenter na">unbekannt</td>';
+						}
+
+						$statement2_first->execute();
+						$row2_first = $statement2_first->fetchAll();
+						$first_timestamp = formatTimestamp($row2_first[0]['first_edit'], $config['timezone']);
+						echo '<td class="tdcenter">' . date('j.', $first_timestamp) . ' ' . $months[intval(date('n', $first_timestamp))] . ' ' . date('Y, H:i:s', $first_timestamp) . '</td>';
+
+						$statement2_last->execute();
+						$row2_last = $statement2_last->fetchAll();
+						$last_timestamp = formatTimestamp($row2_last[0]['last_edit'], $config['timezone']);
+						$diff_seconds = time() - $last_timestamp;
+						echo '<td class="tdcenter">' . date('j.', $last_timestamp) . ' ' . $months[intval(date('n', $last_timestamp))] . ' ' . date('Y, H:i:s', $last_timestamp) . '</td>';
+						echo '<td class="tdcenter">' . printDiffInDays($diff_seconds) . '</td>';
+						echo '</tr>' . "\n";
+					}
+					echo '</tbody>' . "\n";
+					echo '</table>' . "\n";
+					echo '</section>' . "\n";
+				}
+			} catch(PDOException $e){
+				echo $e->getMessage();
 			}
-		} catch(PDOException $e){
-			echo $e->getMessage();
 		}
 	}
 

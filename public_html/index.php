@@ -54,7 +54,7 @@ $min_editcount = isset($_GET['min_editcount'])?intval($_GET['min_editcount']):in
 
 // verify input
 $invalid_date = false;
-if((true === in_array($month, array(4, 6, 9, 11)) && $day === 31) || ($month === 2 && bcmod($year, 4) !== 0 && $day > 28) || ($month === 2 && bcmod($year, 4) === 0 && $day > 29)){
+if((true === in_array($month, array(4, 6, 9, 11)) && $day === 31) || ($month === 2 && intval(bcmod($year, 4)) !== 0 && $day > 28) || ($month === 2 && intval(bcmod($year, 4)) === 0 && $day > 29)){
 	$invalid_date = true;
 	$day = 1;
 }

@@ -145,7 +145,8 @@ if(false === $invalid_date){
 		$dt_end = new DateTime(sprintf('%d-%02d-%02d %02d:%02d:%02d', $year-$wikilaeum, $month, $day, 23, 59, 59), new DateTimeZone($config['timezone']));
 		$dt_start->setTimezone(new DateTimeZone('UTC'));
 		$dt_end->setTimezone(new DateTimeZone('UTC'));
-		if($month === intval($dt_start->format('m'))){ // important to avoid showing results for March 1 on February 29 (i.e. only on leap day, which does not necessarily exist n years earlier)
+		$dt_noon = new DateTime(sprintf('%d-%02d-%02d %02d:%02d:%02d', $year-$wikilaeum, $month, $day, 12, 0, 0), new DateTimeZone($config['timezone']));
+		if($month === intval($dt_noon->format('m'))){ // important to avoid showing results for March 1 on February 29 (i.e. only on leap day, which does not necessarily exist n years earlier)
 			$start = intval($dt_start->format('YmdHis'));
 			$end = intval($dt_end->format('YmdHis'));
 			try {

@@ -2,7 +2,7 @@
     "name" : "wikilaeum-tool",
     "title" : "Wikiläum tool",
     "description" : "Management tool for the Wikiläum award in German Wikipedia",
-    "url" : "https://tools.wmflabs.org/wikilaeum/index.php",
+    "url" : "https://wikilaeum.toolforge.org/index.php",
     "keywords" : "German Wikipedia, Wikiläum, Wikilaeum, Community award",
     "author" : "MisterSynergy",
     "repository" : "https://bitbucket.org/MisterSynergy/wikilaeum.git"

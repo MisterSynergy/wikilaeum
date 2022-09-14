@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# clone repo and evaluate commit properties
-#git clone https://github.com/MisterSynergy/wikilaeum.git # this needs to be done manually before
+# at this point, we have already cloned https://github.com/MisterSynergy/wikilaeum.git manually before
 cd ${HOME}
 git rev-list --format=format:'%ai' --max-count=1 `git rev-parse HEAD` > ${HOME}/commit_version_and_timestamp.txt
 
@@ -15,15 +14,19 @@ fi
 # database setup
 . ${HOME}/config.ini
 mysql --defaults-file=${HOME}/replica.my.cnf -h ${tooldb_host} "CREATE DATABASE IF NOT EXISTS ${tooldb_dbname} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
-mysql --defaults-file=${HOME}/replica.my.cnf -h ${tooldb_host} ${tooldb_dbname} < ${HOME}/wikilaeum.sql
+CHECKTABLES=`mysqlshow --defaults-file=${HOME}/replica.my.cnf --host=${tooldb_host} ${tooldb_dbname} | grep -o localuser`
+if [ "$CHECKTABLES" != "localuser" ]; then
+    mysql --defaults-file=${HOME}/replica.my.cnf -h ${tooldb_host} ${tooldb_dbname} < ${HOME}/wikilaeum.sql
+fi
 
-# create cron jobs
-(crontab -l ; echo "15 3 * * 1 sh ${HOME}/db_backup.sh") | crontab -
-#(crontab -l ; echo "20 3 * * */1 python3 ${HOME}/daily_update.py") | crontab -
+# file permissions
+chmod u+x ${HOME}/*.sh
 
-# set up kubernetes container for the daily database updates
-chmod u+x ${HOME}/container-init.sh
+# set up venv with required python packages for use in kubernetes container for the daily database updates
 webservice --backend=kubernetes python3.9 shell ${HOME}/container-init.sh
 
-kubectl delete cronjob.batch/wikilaeum.dailyupdate
+# create cron jobs
 kubectl apply --validate=true -f ${HOME}/k8s_daily_update.yaml
+
+#kubectl apply --validate=true -f ${HOME}/k8s_backup.yaml  # there is currently no Docker image with mysql cli tools available; see https://phabricator.wikimedia.org/T254636
+(crontab -l ; echo "15 3 * * 1 sh ${HOME}/db-backup.sh") | crontab -  # thus use the gridengine instead

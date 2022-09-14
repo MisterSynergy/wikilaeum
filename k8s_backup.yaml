@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: wikilaeum.backup
+  labels:
+    name: wikilaeum.backup
+    # The toolforge=tool label will cause $HOME and other paths to be mounted from Toolforge
+    toolforge: tool
+spec:
+  schedule: "15 3 * * 1"
+  successfulJobsHistoryLimit: 0
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            toolforge: tool
+        spec:
+          containers:
+          - name: backup
+            image: docker-registry.tools.wmflabs.org/toolforge-bullseye-sssd:latest  # TODO: find an image that has mysql cli tools; see https://phabricator.wikimedia.org/T254636
+            args:
+            - /bin/sh
+            - -c
+            - /data/project/wikilaeum/db-backup.sh
+            workingDir: /data/project/wikilaeum
+            env:
+            - name: HOME
+              value: /data/project/wikilaeum
+          restartPolicy: OnFailure

@@ -1,0 +1,4 @@
+backup/*.sql
+config.ini
+commit_version_and_timestamp.txt
+daily_update_log.txt

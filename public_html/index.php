@@ -21,7 +21,7 @@
 include_once('./Database.php');
 
 $tooluser = posix_getpwuid(posix_getuid());
-if(false === ($config = parse_ini_file($tooluser['dir'] . '/wikilaeum/config.ini', TRUE))){
+if(false === ($config = parse_ini_file($tooluser['dir'] . '/config.ini', TRUE))){
 	exit('cannot read global configuration');
 }
 

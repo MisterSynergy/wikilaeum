@@ -1,0 +1,2 @@
+mysql-connector-python==8.0.29
+protobuf==4.21.2

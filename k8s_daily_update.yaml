@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: wikilaeum.dailyupdate
+  labels:
+    name: wikilaeum.dailyupdate
+    # The toolforge=tool label will cause $HOME and other paths to be mounted from Toolforge
+    toolforge: tool
+spec:
+  schedule: "20 3 * * */1"
+  successfulJobsHistoryLimit: 0
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            toolforge: tool
+        spec:
+          containers:
+          - name: dailyupdate
+            image: docker-registry.tools.wmflabs.org/toolforge-python39-sssd-base:latest
+            command: [ "/data/project/wikilaeum/venv/bin/python3" ]
+            args: [ "/data/project/wikilaeum/daily_update.py" ]
+            workingDir: /data/project/wikilaeum
+            env:
+            - name: HOME
+              value: /data/project/wikilaeum
+          restartPolicy: OnFailure

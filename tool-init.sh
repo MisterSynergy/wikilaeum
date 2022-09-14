@@ -13,7 +13,7 @@ fi
 
 # database setup
 . ${HOME}/config.ini
-mysql --defaults-file=${HOME}/replica.my.cnf -h ${tooldb_host} "CREATE DATABASE IF NOT EXISTS ${tooldb_dbname} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+mysql --defaults-file=${HOME}/replica.my.cnf --host=${tooldb_host} "CREATE DATABASE IF NOT EXISTS ${tooldb_dbname} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
 CHECKTABLES=`mysqlshow --defaults-file=${HOME}/replica.my.cnf --host=${tooldb_host} ${tooldb_dbname} | grep -o localuser`
 if [ "$CHECKTABLES" != "localuser" ]; then
     mysql --defaults-file=${HOME}/replica.my.cnf -h ${tooldb_host} ${tooldb_dbname} < ${HOME}/wikilaeum.sql

@@ -41,7 +41,7 @@ $footer_html .= '</p>';
 unset($tooluser);
 
 // define some useful variables
-$years = range(2006, 2026);
+$years = range(2006, 2036);
 $months = array(1 => "Januar", 2 => "Februar", 3 => "März", 4 => "April", 5 => "Mai", 6 => "Juni", 7 => "Juli", 8 => "August", 9 => "September", 10 => "Oktober", 11 => "November", 12 => "Dezember");
 $days = range(1, 31);
 date_default_timezone_set($config['timezone']);

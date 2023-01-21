@@ -212,7 +212,8 @@ if(false === $invalid_date){
 						$statement2_first->execute();
 						$row2_first = $statement2_first->fetchAll();
 						$first_timestamp = formatTimestamp($row2_first[0]['first_edit'], $config['timezone']);
-						echo '<td class="tdcenter">' . date('j.', $first_timestamp) . ' ' . $months[intval(date('n', $first_timestamp))] . ' ' . date('Y, H:i:s', $first_timestamp) . '</td>';
+						$shadow_and_live_diff = $row2_first[0]['first_edit'] - $first[$userid];
+						echo '<td class="tdcenter' . ($shadow_and_live_diff!==0?' first_date_incorrect':'') . '">' . date('j.', $first_timestamp) . ' ' . $months[intval(date('n', $first_timestamp))] . ' ' . date('Y, H:i:s', $first_timestamp) . '</td>';
 
 						$statement2_last->execute();
 						$row2_last = $statement2_last->fetchAll();

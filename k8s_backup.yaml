@@ -18,13 +18,11 @@ spec:
         spec:
           containers:
           - name: backup
-            image: docker-registry.tools.wmflabs.org/toolforge-bullseye-sssd:latest  # TODO: find an image that has mysql cli tools; see https://phabricator.wikimedia.org/T254636
-            args:
-            - /bin/sh
-            - -c
-            - /data/project/wikilaeum/db-backup.sh
-            workingDir: /data/project/wikilaeum
+            image: docker-registry.tools.wmflabs.org/toolforge-mariadb-sssd-base:latest
             env:
             - name: HOME
               value: /data/project/wikilaeum
-          restartPolicy: OnFailure
+            workingDir: /data/project/wikilaeum
+            command: [ /bin/sh ]
+            args: [ '-c', '/data/project/wikilaeum/db-backup.sh' ]
+          restartPolicy: Never

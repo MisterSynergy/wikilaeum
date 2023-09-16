@@ -27,9 +27,7 @@ webservice --backend=kubernetes python3.9 shell ${HOME}/container-init.sh
 
 # create cron jobs
 kubectl apply --validate=true -f ${HOME}/k8s_daily_update.yaml
-
-#kubectl apply --validate=true -f ${HOME}/k8s_backup.yaml  # there is currently no Docker image with mysql cli tools available; see https://phabricator.wikimedia.org/T254636
-(crontab -l ; echo "15 3 * * 1 sh ${HOME}/db-backup.sh") | crontab -  # thus use the gridengine instead
+kubectl apply --validate=true -f ${HOME}/k8s_backup.yaml
 
 # start the webserver
 webservice --backend=kubernetes start

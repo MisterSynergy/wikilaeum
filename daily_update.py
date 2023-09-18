@@ -1,11 +1,9 @@
+from configparser import ConfigParser
 from os.path import expanduser
 from time import gmtime, strftime, time
-from configparser import ConfigParser
-from typing import Optional
+from typing import Any, Optional
 
-from mysql.connector import MySQLConnection
-from mysql.connector.cursor import MySQLCursor
-from mysql.connector.errors import InterfaceError
+import mariadb
 
 
 class Config:
@@ -18,7 +16,7 @@ class Config:
             encoding='utf8'
         ) as file_handle:
             config_str = file_handle.read()
-        
+
         self.config.read_string(f'[wikilaeum]\n{config_str}')
 
         for key in self.config['wikilaeum']:
@@ -33,18 +31,19 @@ class Config:
 
 class DatabaseCursor:
     def __init__(self, host:str, database:str, autocommit:bool=False) -> None:
-        self.connection = MySQLConnection(
+        self.connection = mariadb.connect(
             host=host,
             database=database,
-            option_files=f'{expanduser("~")}/replica.my.cnf',
-            autocommit=autocommit
+            default_file=f'{expanduser("~")}/replica.my.cnf',
+            autocommit=autocommit,
         )
-        self.cursor = self.connection.cursor()
 
-    def __enter__(self) -> MySQLCursor:
+        self.cursor = self.connection.cursor(dictionary=True)
+
+    def __enter__(self):
         return self.cursor
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.cursor.close()
         self.connection.close()
 
@@ -53,7 +52,7 @@ class ReplicaCursor(DatabaseCursor):
     def __init__(self) -> None:
         super().__init__(
             host=CONFIG.get_config('replica_dewiki_analytics_host'),
-            database=CONFIG.get_config('replica_dewiki_dbname')
+            database=CONFIG.get_config('replica_dewiki_dbname'),
         )
 
 
@@ -62,19 +61,19 @@ class ToolDatabaseCursor(DatabaseCursor):
         super().__init__(
             host=CONFIG.get_config('tooldb_host'),
             database=CONFIG.get_config('tooldb_dbname'),
-            autocommit=True
+            autocommit=True,
         )
 
 
-def query_mediawiki(query:str) -> list[tuple]:
+def query_mediawiki(query:str, params:Optional[dict[str, Any]]=None) -> list[dict[str, Any]]:
     with ReplicaCursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, params)
         result = cursor.fetchall()
 
     return result
 
 
-def query_tool_database(query:str) -> list[tuple]:
+def query_tool_database(query:str) -> list[dict[str, Any]]:
     with ToolDatabaseCursor() as cursor:
         cursor.execute(query)
         result = cursor.fetchall()
@@ -100,26 +99,23 @@ GROUP BY
   actor_user"""
 
     query_result = query_mediawiki(query)
-    print(f'This took {int(time()-time_start):d} seconds')
+    print(f'This took {time()-time_start:d} seconds')
     
     result = {}
-    for tpl in query_result:
-        result[tpl[0]] = tpl[1].decode('utf8')
+    for dct in query_result:
+        result[dct.get('actor_user', 0)] = dct.get('first_edit', b'').decode('utf8')
 
     return result
 
 
-def insert_user_id(cursor:MySQLCursor, user_id:int, first_edit:str) -> int:
+def insert_user_id(cursor, user_id:int, first_edit:str) -> int:
     query = f"""INSERT INTO
   localuser (user_id, timestmp_first)
 VALUES
-  ({user_id:d}, {first_edit})"""
+  (%(user_id)s, %(timestmp_first)s)"""
+    params = { 'user_id' : user_id, 'timestmp_first' : first_edit}
 
-    try:
-        cursor.execute(query)
-    except (InterfaceError, NameError) as exception:
-        print(exception)
-        return 0
+    #cursor.execute(query, params)
 
     return 1
 
@@ -142,10 +138,12 @@ def insert_user_ids(user_ids:list[int]) -> int:
 
 
 def query_heavyusers(limit:int) -> list[int]:
-    query = f"""SELECT user_id FROM user WHERE user_editcount>={limit}"""
-    query_result = query_mediawiki(query)
+    query = f"""SELECT user_id FROM user WHERE user_editcount>=%(limit)s"""
+    params = { 'limit' : limit }
 
-    user_ids = [ user_id_tuple[0] for user_id_tuple in query_result ]
+    query_result = query_mediawiki(query, params)
+
+    user_ids = [ dct.get('user_id', 0) for dct in query_result ]
 
     print(f'Found {len(user_ids):d} users with more than {limit:d} edits in replica database')
 
@@ -156,7 +154,7 @@ def query_localusers() -> list[int]:
     query = 'SELECT user_id FROM localuser'
     query_result = query_tool_database(query)
 
-    user_ids = [ user_id_tuple[0] for user_id_tuple in query_result ]
+    user_ids = [ dct.get('user_id', 0) for dct in query_result ]
 
     print(f'Found {len(user_ids):d} users in local database')
 

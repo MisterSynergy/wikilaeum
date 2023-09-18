@@ -115,7 +115,7 @@ VALUES
   (%(user_id)s, %(timestmp_first)s)"""
     params = { 'user_id' : user_id, 'timestmp_first' : first_edit}
 
-    #cursor.execute(query, params)
+    cursor.execute(query, params)
 
     return 1
 

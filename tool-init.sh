@@ -30,4 +30,4 @@ kubectl apply --validate=true -f ${HOME}/k8s_daily_update.yaml
 kubectl apply --validate=true -f ${HOME}/k8s_backup.yaml
 
 # start the webserver
-webservice start
+webservice php8.2 start

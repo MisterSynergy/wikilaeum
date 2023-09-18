@@ -5,3 +5,6 @@ git rev-list --format=format:'%ai' --max-count=1 `git rev-parse HEAD` > ${HOME}/
 
 # file permissions
 chmod u+x ${HOME}/*.sh
+
+# restart webserver
+webservice php8.2 restart

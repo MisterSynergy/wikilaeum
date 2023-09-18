@@ -18,7 +18,7 @@ spec:
         spec:
           containers:
           - name: dailyupdate
-            image: docker-registry.tools.wmflabs.org/toolforge-python39-sssd-base:latest
+            image: docker-registry.tools.wmflabs.org/toolforge-python311-sssd-base:latest
             command: [ "/data/project/wikilaeum/venv/bin/python3" ]
             args: [ "/data/project/wikilaeum/daily_update.py" ]
             workingDir: /data/project/wikilaeum

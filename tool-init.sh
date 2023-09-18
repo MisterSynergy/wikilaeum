@@ -23,11 +23,11 @@ fi
 chmod u+x ${HOME}/*.sh
 
 # set up venv with required python packages for use in kubernetes container for the daily database updates
-webservice --backend=kubernetes python3.9 shell ${HOME}/container-init.sh
+webservice python3.11 shell ${HOME}/container-init.sh
 
 # create cron jobs
 kubectl apply --validate=true -f ${HOME}/k8s_daily_update.yaml
 kubectl apply --validate=true -f ${HOME}/k8s_backup.yaml
 
 # start the webserver
-webservice --backend=kubernetes start
+webservice start

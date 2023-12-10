@@ -99,8 +99,8 @@ GROUP BY
   actor_user"""
 
     query_result = query_mediawiki(query)
-    print(f'This took {time()-time_start:d} seconds')
-    
+    print(f'This took {time()-time_start:.0f} seconds')
+
     result = {}
     for dct in query_result:
         result[dct.get('actor_user', 0)] = dct.get('first_edit', b'').decode('utf8')
@@ -184,7 +184,7 @@ def make_output(output:str) -> None:
 def main() -> None:
     # init
     now_at_start = time()
-    
+
     editcount_threshold = int(CONFIG.get_config('editcount_threshold'))
     insert_limit = int(CONFIG.get_config('insertcounter_limit'))
 
